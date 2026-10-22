@@ -1,0 +1,617 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow - Task Manager</title>
+
+<style>
+:root {
+  --bg: #f4f6fb;
+  --card: #fff;
+  --text: #20243a;
+  --muted: #72788b;
+  --border: #e1e5ef;
+  --primary: #6658e8;
+}
+body.dark {
+  --bg: #171a2b;
+  --card: #23273b;
+  --text: #f4f4fb;
+  --muted: #b1b5c7;
+  --border: #3a3f55;
+  --primary: #9185ff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 25px 15px;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: .2s;
+}
+.app { max-width: 900px; margin: auto; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+h1 { margin: 0; font-size: 28px; }
+.subtitle { color: var(--muted); margin: 7px 0 0; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+.theme, .secondary {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--card);
+  border-radius: 9px;
+  padding: 10px 13px;
+}
+.panel, .stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 18px;
+}
+h2 { font-size: 18px; margin: 0 0 16px; }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.stat { margin: 0; }
+.stat p { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+.stat strong { font-size: 28px; }
+input, select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+input:focus, select:focus { outline: 2px solid var(--primary); }
+.add-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 10px;
+}
+.primary {
+  background: var(--primary);
+  color: white;
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 17px;
+  font-weight: bold;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 17px;
+}
+.filters { display: flex; gap: 7px; flex-wrap: wrap; }
+.filter {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 13px;
+  color: var(--muted);
+  background: var(--card);
+}
+.filter.active { background: var(--primary); color: white; }
+.search { max-width: 260px; }
+.task-list { display: grid; gap: 10px; }
+.task {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  animation: appear .2s ease;
+}
+@keyframes appear {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.task input[type="checkbox"] {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+}
+.task-info { flex: 1; min-width: 0; }
+.task-title { font-weight: bold; overflow-wrap: anywhere; }
+.task.completed .task-title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 7px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.tag {
+  background: rgba(102, 88, 232, .12);
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 4px 7px;
+}
+.overdue { color: #e04d60; font-weight: bold; }
+.actions { display: flex; gap: 6px; }
+.actions button {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.actions .delete:hover { color: #e04d60; }
+.empty { text-align: center; padding: 35px 10px; color: var(--muted); }
+#message {
+  display: none;
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 9px;
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  background: rgba(0,0,0,.55);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal.open { display: flex; }
+.modal-box {
+  width: 100%;
+  max-width: 430px;
+  padding: 22px;
+  background: var(--card);
+  color: var(--text);
+  border-radius: 15px;
+}
+.modal-box input, .modal-box select { margin-bottom: 12px; }
+.modal-buttons { display: flex; justify-content: flex-end; gap: 8px; }
+footer { text-align: center; color: var(--muted); font-size: 12px; padding: 12px; }
+
+@media (max-width: 700px) {
+  .add-form { grid-template-columns: 1fr 1fr; }
+  .add-form input:first-child { grid-column: 1 / -1; }
+  .stats { gap: 7px; }
+  .stat { padding: 13px; }
+  .stat strong { font-size: 23px; }
+  .search { max-width: none; }
+}
+@media (max-width: 430px) {
+  .task { gap: 7px; padding: 10px; }
+  .actions { flex-direction: column; }
+  .actions button { padding: 7px; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>✓ TaskFlow</h1>
+      <p class="subtitle">Organize your day, one task at a time.</p>
+    </div>
+    <button type="button" class="theme" id="themeBtn">🌙 Dark</button>
+  </header>
+
+  <div id="message" role="status"></div>
+
+  <section class="stats">
+    <div class="stat"><p>Total Tasks</p><strong id="total">0</strong></div>
+    <div class="stat"><p>Active Tasks</p><strong id="active">0</strong></div>
+    <div class="stat"><p>Completed</p><strong id="completed">0</strong></div>
+  </section>
+
+  <section class="panel">
+    <h2>Add a New Task</h2>
+    <form id="addForm" class="add-form">
+      <input id="taskInput" type="text" placeholder="Enter task name..." maxlength="200" required>
+      <select id="categoryInput" aria-label="Task category">
+        <option value="Work">💼 Work</option>
+        <option value="Personal">🏠 Personal</option>
+        <option value="Study" selected>📚 Study</option>
+      </select>
+      <input id="dateInput" type="date" aria-label="Due date">
+      <button class="primary" type="submit">+ Add Task</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div class="filters">
+        <button class="filter active" data-filter="All" type="button">All</button>
+        <button class="filter" data-filter="Active" type="button">Active</button>
+        <button class="filter" data-filter="Completed" type="button">Completed</button>
+      </div>
+      <input id="searchInput" class="search" type="search" placeholder="Search tasks...">
+    </div>
+    <div id="taskList" class="task-list"></div>
+  </section>
+
+  <footer>Tasks are saved in your browser using localStorage.</footer>
+</div>
+
+<div id="editModal" class="modal">
+  <form id="editForm" class="modal-box">
+    <h2>Edit Task</h2>
+    <input id="editTitle" type="text" maxlength="200" placeholder="Task name" required>
+    <select id="editCategory">
+      <option value="Work">💼 Work</option>
+      <option value="Personal">🏠 Personal</option>
+      <option value="Study">📚 Study</option>
+    </select>
+    <input id="editDate" type="date" aria-label="Edit due date">
+    <div class="modal-buttons">
+      <button class="secondary" id="cancelEdit" type="button">Cancel</button>
+      <button class="primary" type="submit">Save Changes</button>
+    </div>
+  </form>
+</div>
+
+<script>
+"use strict";
+
+const STORAGE_KEY = "taskflow_simple_tasks_v1";
+const THEME_KEY = "taskflow_simple_theme_v1";
+
+const $ = id => document.getElementById(id);
+
+let tasks = [];
+let filter = "All";
+let search = "";
+let editingId = null;
+
+function showMessage(text) {
+  $("message").textContent = text;
+  $("message").style.display = "block";
+}
+
+function hideMessage() {
+  $("message").style.display = "none";
+}
+
+function createId() {
+  return (window.crypto && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function saveTasks() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    hideMessage();
+    return true;
+  } catch (error) {
+    showMessage("Could not save tasks. Check your browser storage settings.");
+    console.error(error);
+    return false;
+  }
+}
+
+function loadTasks() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [];
+
+    const data = JSON.parse(stored);
+    if (!Array.isArray(data)) return [];
+
+    return data.filter(task =>
+      task &&
+      typeof task.id === "string" &&
+      typeof task.title === "string" &&
+      typeof task.completed === "boolean" &&
+      ["Work", "Personal", "Study"].includes(task.category) &&
+      typeof task.dueDate === "string"
+    );
+  } catch (error) {
+    showMessage("Saved data could not be read. New tasks can still be added.");
+    console.error(error);
+    return [];
+  }
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+function formatDate(value) {
+  if (!value) return "";
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+    day: "numeric", month: "short", year: "numeric"
+  });
+}
+
+function isOverdue(task) {
+  if (!task.dueDate || task.completed) return false;
+
+  const now = new Date();
+  const today = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0")
+  ].join("-");
+
+  return task.dueDate < today;
+}
+
+function updateStats() {
+  $("total").textContent = tasks.length;
+  $("active").textContent = tasks.filter(t => !t.completed).length;
+  $("completed").textContent = tasks.filter(t => t.completed).length;
+}
+
+function renderTasks() {
+  updateStats();
+
+  document.querySelectorAll(".filter").forEach(button => {
+    const selected = button.dataset.filter === filter;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+
+  const visible = tasks.filter(task => {
+    const statusMatches =
+      filter === "All" ||
+      (filter === "Active" && !task.completed) ||
+      (filter === "Completed" && task.completed);
+
+    const searchMatches =
+      task.title.toLowerCase().includes(search.toLowerCase()) ||
+      task.category.toLowerCase().includes(search.toLowerCase());
+
+    return statusMatches && searchMatches;
+  });
+
+  const list = $("taskList");
+
+  if (!visible.length) {
+    list.innerHTML = `
+      <div class="empty">
+        <h3>${tasks.length ? "No matching tasks" : "No tasks yet"}</h3>
+        <p style="margin-top:8px">
+          ${tasks.length ? "Try a different filter or search." : "Add your first task above."}
+        </p>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = visible.map(task => {
+    const categoryLabel = {
+      Work: "💼 Work",
+      Personal: "🏠 Personal",
+      Study: "📚 Study"
+    }[task.category];
+
+    const dateLabel = task.dueDate
+      ? `<span class="${isOverdue(task) ? "overdue" : ""}">
+          ${isOverdue(task) ? "⚠ Overdue: " : "📅 "}
+          ${escapeHTML(formatDate(task.dueDate))}
+        </span>`
+      : "";
+
+    return `
+      <article class="task ${task.completed ? "completed" : ""}"
+        data-id="${escapeHTML(task.id)}">
+        <input type="checkbox" data-action="toggle"
+          aria-label="Mark task complete" ${task.completed ? "checked" : ""}>
+        <div class="task-info">
+          <div class="task-title">${escapeHTML(task.title)}</div>
+          <div class="meta">
+            <span class="tag">${categoryLabel}</span>
+            ${dateLabel}
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" data-action="edit" aria-label="Edit task">✏️</button>
+          <button type="button" class="delete" data-action="delete" aria-label="Delete task">🗑️</button>
+        </div>
+      </article>`;
+  }).join("");
+}
+
+// CREATE: add a task and immediately update the screen.
+$("addForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  const title = $("taskInput").value.trim();
+  if (!title) {
+    showMessage("Please enter a task name.");
+    return;
+  }
+
+  const task = {
+    id: createId(),
+    title: title,
+    category: $("categoryInput").value,
+    dueDate: $("dateInput").value,
+    completed: false
+  };
+
+  tasks.unshift(task);
+
+  if (!saveTasks()) {
+    tasks.shift();
+    return;
+  }
+
+  this.reset();
+  $("categoryInput").value = "Study";
+  renderTasks();
+  $("taskInput").focus();
+});
+
+// READ and UPDATE: handle checkbox and edit/delete buttons.
+$("taskList").addEventListener("change", function(event) {
+  if (event.target.dataset.action !== "toggle") return;
+
+  const row = event.target.closest(".task");
+  if (!row) return;
+
+  const task = tasks.find(t => t.id === row.dataset.id);
+  if (!task) return;
+
+  const oldValue = task.completed;
+  task.completed = event.target.checked;
+
+  if (saveTasks()) {
+    renderTasks();
+  } else {
+    task.completed = oldValue;
+    renderTasks();
+  }
+});
+
+$("taskList").addEventListener("click", function(event) {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const row = button.closest(".task");
+  if (!row) return;
+
+  const id = row.dataset.id;
+
+  if (button.dataset.action === "edit") {
+    openEdit(id);
+  } else if (button.dataset.action === "delete") {
+    removeTask(id);
+  }
+});
+
+// DELETE
+function removeTask(id) {
+  const index = tasks.findIndex(t => t.id === id);
+  if (index === -1) return;
+
+  const removed = tasks.splice(index, 1)[0];
+
+  if (saveTasks()) {
+    renderTasks();
+  } else {
+    tasks.splice(index, 0, removed);
+    renderTasks();
+  }
+}
+
+// EDIT
+function openEdit(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+
+  editingId = id;
+  $("editTitle").value = task.title;
+  $("editCategory").value = task.category;
+  $("editDate").value = task.dueDate;
+  $("editModal").classList.add("open");
+  $("editTitle").focus();
+}
+
+function closeEdit() {
+  $("editModal").classList.remove("open");
+  editingId = null;
+}
+
+$("editForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  const task = tasks.find(t => t.id === editingId);
+  const title = $("editTitle").value.trim();
+
+  if (!task || !title) return;
+
+  const oldTask = { ...task };
+
+  task.title = title;
+  task.category = $("editCategory").value;
+  task.dueDate = $("editDate").value;
+
+  if (saveTasks()) {
+    closeEdit();
+    renderTasks();
+  } else {
+    Object.assign(task, oldTask);
+  }
+});
+
+$("cancelEdit").addEventListener("click", closeEdit);
+
+$("editModal").addEventListener("click", event => {
+  if (event.target === $("editModal")) closeEdit();
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeEdit();
+});
+
+// FILTER
+document.querySelectorAll(".filter").forEach(button => {
+  button.addEventListener("click", () => {
+    filter = button.dataset.filter;
+    renderTasks();
+  });
+});
+
+// SEARCH
+$("searchInput").addEventListener("input", event => {
+  search = event.target.value.trim();
+  renderTasks();
+});
+
+// DARK MODE
+function setTheme(dark) {
+  document.body.classList.toggle("dark", dark);
+  $("themeBtn").textContent = dark ? "☀ Light" : "🌙 Dark";
+}
+
+try {
+  setTheme(localStorage.getItem(THEME_KEY) === "dark");
+} catch (error) {
+  setTheme(false);
+}
+
+$("themeBtn").addEventListener("click", () => {
+  const dark = !document.body.classList.contains("dark");
+  setTheme(dark);
+
+  try {
+    localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
+  } catch (error) {
+    console.warn("Theme preference could not be saved.");
+  }
+});
+
+// INITIALIZE
+tasks = loadTasks();
+renderTasks();
+</script>
+</body>
+</html>

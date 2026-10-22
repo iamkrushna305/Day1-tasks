@@ -1,0 +1,582 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShopEase - Shopping & Admin</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#5b4bdb;--dark:#252342;--bg:#f6f7fb;--border:#e8e9f0;--muted:#777b8c}
+body{font-family:Arial,sans-serif;background:var(--bg);color:#202235}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+header{background:white;padding:16px 5%;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;box-shadow:0 2px 12px #00000008}
+.logo{font-size:25px;font-weight:bold;color:var(--primary)}
+nav{display:flex;gap:9px;flex-wrap:wrap}
+.btn{background:var(--primary);color:white;border:0;padding:11px 15px;border-radius:8px;font-weight:bold}
+.btn:hover{background:#4435bd}
+.outline{background:white;color:#252342;border:1px solid var(--border)}
+.outline:hover{background:#f0eeff;color:var(--primary)}
+input,select,textarea{padding:11px;border:1px solid var(--border);border-radius:8px;background:white;max-width:100%}
+.search{display:flex;flex:1;max-width:430px}
+.search input{width:100%;border-radius:8px 0 0 8px}
+.search button{border-radius:0 8px 8px 0}
+.page{display:none}
+.page.active{display:block}
+.hero{margin:25px 5%;padding:42px;border-radius:18px;background:linear-gradient(120deg,#29244e,#6655df);color:white}
+.hero h1{font-size:clamp(28px,4vw,44px);margin-bottom:14px}
+.hero p{line-height:1.7;color:#e5e3ff;margin-bottom:20px}
+.hero .btn{background:white;color:var(--primary)}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:0 5% 28px}
+.feature,.card,.panel,.stat{background:white;border:1px solid var(--border);border-radius:12px;padding:17px}
+.feature p,.muted{color:var(--muted);font-size:13px;margin-top:6px}
+main{padding:0 5% 40px}
+.heading{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin:20px 0}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.filter{background:white;border:1px solid var(--border);border-radius:22px;padding:9px 14px}
+.filter.active{background:var(--primary);color:white}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.product{background:white;border:1px solid var(--border);border-radius:13px;padding:14px;display:flex;flex-direction:column;position:relative;min-width:0}
+.product img{height:175px;width:100%;object-fit:contain;padding:12px;background:#fafaff;border-radius:9px;margin-bottom:13px}
+.category{color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:8px}
+.product h3{font-size:14px;line-height:1.5;min-height:42px;margin-bottom:9px}
+.rating{color:#d99a00;font-size:12px;margin-bottom:12px}
+.price{font-size:18px;font-weight:bold;margin-bottom:12px}
+.product .btn{width:100%;margin-top:auto}
+.status{padding:35px;text-align:center;color:var(--muted);grid-column:1/-1}
+.overlay{display:none;position:fixed;inset:0;background:#17152c80;z-index:10}
+.overlay.show{display:block}
+.cart{position:fixed;right:-440px;top:0;height:100%;width:min(420px,100%);background:white;z-index:11;padding:20px;display:flex;flex-direction:column;transition:.25s}
+.cart.open{right:0}
+.cart-items{overflow-y:auto;flex:1;padding:12px 0}
+.cart-item{display:grid;grid-template-columns:60px 1fr auto;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);align-items:center}
+.cart-item img{width:60px;height:60px;object-fit:contain}
+.cart-item h4{font-size:12px;line-height:1.5}
+.cart-item p{font-size:13px;margin-top:5px}
+.qty{display:flex;align-items:center;gap:8px;margin-top:8px}
+.qty button{padding:3px 8px;border:1px solid var(--border);background:white;border-radius:5px}
+.summary{border-top:1px solid var(--border);padding-top:14px}
+.line{display:flex;justify-content:space-between;gap:12px;margin:10px 0;font-size:14px}
+.line.total{font-size:19px;font-weight:bold;border-top:1px dashed var(--border);padding-top:12px}
+.summary>.btn{width:100%}
+.modal{display:none;position:fixed;inset:0;background:#17152c90;z-index:20;align-items:center;justify-content:center;padding:18px}
+.modal.show{display:flex}
+.modal-content{background:white;padding:24px;border-radius:14px;width:min(520px,100%);max-height:90vh;overflow-y:auto}
+.modal-content h2{margin-bottom:10px}
+.field{margin:14px 0}
+.field label{display:block;font-size:13px;font-weight:bold;margin-bottom:7px}
+.field input,.field textarea{width:100%}
+.actions{display:flex;gap:10px;margin-top:18px}
+.actions button{flex:1}
+.panel{margin:20px 0;padding:20px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:20px 0}
+.stat p{font-size:13px;color:var(--muted);margin-bottom:10px}
+.stat h2{color:var(--primary);overflow-wrap:anywhere}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th,td{padding:12px 10px;border-bottom:1px solid var(--border);text-align:left;font-size:13px;vertical-align:top}
+th{background:#f8f7ff}
+.small{padding:7px 9px;font-size:11px;margin:2px}
+.danger{background:#ffe8ec;color:#b92340}
+footer{background:var(--dark);color:white;padding:25px 5%;text-align:center;line-height:1.8}
+footer p{font-size:13px;color:#c9c7e4}
+@media(max-width:1000px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){header{padding:15px 4%}.hero{margin:18px 4%;padding:26px}.features{grid-template-columns:1fr;margin:0 4% 25px}main{padding:0 4% 30px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.product{padding:10px}.product img{height:140px}.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:400px){.grid{grid-template-columns:1fr}.product img{height:190px}.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ShopEase.</div>
+  <form class="search" id="searchForm">
+    <input id="searchInput" type="search" placeholder="Search products...">
+    <button class="btn" type="submit">Search</button>
+  </form>
+  <nav>
+    <button class="btn outline" id="shopNav">User Store</button>
+    <button class="btn outline" id="adminNav">Admin Panel ↗</button>
+    <button class="btn" id="cartNav">🛒 Cart <span id="cartCount">0</span></button>
+  </nav>
+</header>
+
+<!-- USER STORE VIEW -->
+<section class="page active" id="storePage">
+  <div class="hero">
+    <h1>Find something you'll love.</h1>
+    <p>Explore electronics, fashion, jewellery and more.<br>Shop your favourite products with ease.</p>
+    <button class="btn" onclick="document.getElementById('productsSection').scrollIntoView({behavior:'smooth'})">Explore Products →</button>
+  </div>
+
+  <div class="features">
+    <div class="feature"><strong>🚚 Free Shipping</strong><p>On orders of ₹4,250 or more</p></div>
+    <div class="feature"><strong>🛍️ Easy Shopping</strong><p>Browse and add products to your cart</p></div>
+    <div class="feature"><strong>⭐ Customer Ratings</strong><p>View product ratings and reviews</p></div>
+  </div>
+
+  <main id="productsSection">
+    <div class="heading">
+      <div><h2>Explore Products</h2><p class="muted">Discover your favourites.</p></div>
+      <select id="sortSelect">
+        <option value="default">Recommended</option>
+        <option value="low">Price: Low to High</option>
+        <option value="high">Price: High to Low</option>
+        <option value="rating">Top Rated</option>
+      </select>
+    </div>
+
+    <div class="filters">
+      <button class="filter active" data-category="all">All Products</button>
+      <button class="filter" data-category="electronics">Electronics</button>
+      <button class="filter" data-category="jewelery">Jewelry</button>
+      <button class="filter" data-category="men's clothing">Men's Fashion</button>
+      <button class="filter" data-category="women's clothing">Women's Fashion</button>
+    </div>
+    <div class="grid" id="productGrid"><div class="status">Loading products...</div></div>
+  </main>
+</section>
+
+<!-- ADMIN PANEL VIEW IN THE SAME HTML FILE -->
+<section class="page" id="adminPage">
+  <main>
+    <div class="heading">
+      <div><h1>Admin Dashboard</h1><p class="muted">Manage customer orders.</p></div>
+      <button class="btn" id="refreshAdmin">↻ Refresh Orders</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><p>Total Orders</p><h2 id="totalOrders">0</h2></div>
+      <div class="stat"><p>Pending Orders</p><h2 id="pendingOrders">0</h2></div>
+      <div class="stat"><p>Total Order Value</p><h2 id="totalRevenue">₹0.00</h2></div>
+    </div>
+
+    <div class="panel">
+      <div class="heading"><h2>📦 Customer Orders</h2><button class="btn outline" id="backToStore">← Back to Store</button></div>
+      <p class="muted" style="margin-bottom:16px">
+        Review orders, view customer information, update order status, or delete demo orders.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order ID / Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="ordersTable"></tbody>
+        </table>
+      </div>
+      <p class="status" id="emptyOrders">No orders yet. Place a demo order from the User Store.</p>
+    </div>
+  </main>
+</section>
+
+<!-- CART -->
+<div class="overlay" id="overlay"></div>
+<aside class="cart" id="cartPanel">
+  <div class="heading"><h2>Your Cart</h2><button class="btn outline" id="closeCart">✕</button></div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="summary">
+    <div class="line"><span>Subtotal</span><strong id="subtotal">₹0.00</strong></div>
+    <div class="line"><span>Tax (18%)</span><strong id="tax">₹0.00</strong></div>
+    <div class="line"><span>Shipping</span><strong id="shipping">₹0.00</strong></div>
+    <div class="line total"><span>Total</span><strong id="total">₹0.00</strong></div>
+    <button class="btn" id="checkoutButton">Proceed to Checkout</button>
+  </div>
+</aside>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal" id="checkoutModal">
+  <div class="modal-content">
+    <div class="heading"><h2>Checkout</h2><button class="btn outline" id="closeCheckout">✕</button></div>
+    <p class="muted">Demo checkout only. No real payment is collected.</p>
+    <form id="checkoutForm">
+      <div class="field"><label for="customerName">Full Name *</label><input id="customerName" maxlength="80" required></div>
+      <div class="field"><label for="customerEmail">Email *</label><input id="customerEmail" type="email" maxlength="120" required></div>
+      <div class="field"><label for="customerAddress">Delivery Address *</label><textarea id="customerAddress" rows="3" maxlength="300" required></textarea></div>
+      <div class="field"><label for="customerPhone">Phone (optional)</label><input id="customerPhone" type="tel" maxlength="20"></div>
+      <div class="actions"><button type="button" class="btn outline" id="cancelCheckout">Cancel</button><button class="btn" type="submit">Place Demo Order</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ORDER DETAILS MODAL -->
+<div class="modal" id="detailsModal">
+  <div class="modal-content">
+    <div class="heading"><h2>Order Details</h2><button class="btn outline" id="closeDetails">✕</button></div>
+    <div id="detailsContent"></div>
+  </div>
+</div>
+
+<footer>
+  <h3>ShopEase.</h3>
+  <p>Simple shopping. Everyday favourites.</p>
+  <p>Educational demo website — no real payments are processed.</p>
+  <p>© <span id="year"></span> ShopEase</p>
+</footer>
+
+<script>
+const USD_TO_INR = 85; // Example conversion rate; update when needed
+const TAX_RATE = 0.18;
+const SHIPPING_FEE = 99;
+const FREE_SHIPPING_LIMIT = 4250;
+const CART_KEY = "shopease_cart_v2";
+const ORDERS_KEY = "shopease_orders_v2";
+
+let products = [];
+let category = "all";
+let cart = readStorage(CART_KEY, []);
+let orders = readStorage(ORDERS_KEY, []);
+
+const $ = id => document.getElementById(id);
+
+function readStorage(key, fallback) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key));
+    return value ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function money(value) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency", currency: "INR",
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  }).format(Number(value) || 0);
+}
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function saveCart() {
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
+
+function saveOrders() {
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+}
+
+/* Switch views without leaving this HTML page */
+function showPage(page) {
+  $("storePage").classList.toggle("active", page === "store");
+  $("adminPage").classList.toggle("active", page === "admin");
+  closeCart();
+  window.scrollTo({top:0, behavior:"smooth"});
+  if (page === "admin") renderOrders();
+}
+
+$("shopNav").addEventListener("click", () => showPage("store"));
+$("adminNav").addEventListener("click", () => showPage("admin"));
+$("backToStore").addEventListener("click", () => showPage("store"));
+
+async function loadProducts() {
+  $("productGrid").innerHTML = '<div class="status">Loading products...</div>';
+
+  try {
+    const response = await fetch("https://fakestoreapi.com/products");
+    if (!response.ok) throw new Error("Product request failed");
+
+    const data = await response.json();
+
+    // Convert API prices only once, then use the converted prices everywhere.
+    products = data.map(p => ({...p, price:Number(p.price) * USD_TO_INR}));
+
+    renderProducts();
+    renderCart();
+  } catch {
+    $("productGrid").innerHTML = `
+      <div class="status">
+        <h3>Unable to load products</h3>
+        <p style="margin:10px">Check your internet connection and try again.</p>
+        <button class="btn" onclick="loadProducts()">Try Again</button>
+      </div>`;
+  }
+}
+
+function visibleProducts() {
+  let list = [...products];
+  if (category !== "all") list = list.filter(p => p.category === category);
+
+  const query = $("searchInput").value.trim().toLowerCase();
+  if (query) list = list.filter(p =>
+    p.title.toLowerCase().includes(query) ||
+    p.category.toLowerCase().includes(query) ||
+    p.description.toLowerCase().includes(query)
+  );
+
+  if ($("sortSelect").value === "low") list.sort((a,b) => a.price-b.price);
+  if ($("sortSelect").value === "high") list.sort((a,b) => b.price-a.price);
+  if ($("sortSelect").value === "rating") list.sort((a,b) => b.rating.rate-a.rating.rate);
+  return list;
+}
+
+function renderProducts() {
+  document.querySelectorAll(".filter").forEach(b =>
+    b.classList.toggle("active", b.dataset.category === category)
+  );
+
+  const list = visibleProducts();
+  if (!list.length) {
+    $("productGrid").innerHTML = '<div class="status">No products found. Try another search.</div>';
+    return;
+  }
+
+  $("productGrid").innerHTML = list.map(p => `
+    <article class="product">
+      <img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy">
+      <div class="category">${esc(p.category)}</div>
+      <h3>${esc(p.title)}</h3>
+      <div class="rating">★ ${Number(p.rating.rate).toFixed(1)} <span style="color:#777b8c">(${p.rating.count} reviews)</span></div>
+      <div class="price">${money(p.price)}</div>
+      <button class="btn" onclick="addToCart(${p.id})">+ Add to Cart</button>
+    </article>
+  `).join("");
+}
+
+document.querySelectorAll(".filter").forEach(b => b.addEventListener("click", () => {
+  category = b.dataset.category;
+  renderProducts();
+}));
+
+$("searchInput").addEventListener("input", renderProducts);
+$("sortSelect").addEventListener("change", renderProducts);
+$("searchForm").addEventListener("submit", e => {
+  e.preventDefault();
+  renderProducts();
+});
+
+function addToCart(id) {
+  const p = products.find(item => item.id === id);
+  if (!p) return;
+  const existing = cart.find(item => item.id === id);
+
+  if (existing) existing.quantity++;
+  else cart.push({
+    id:p.id, title:p.title, price:p.price, image:p.image, quantity:1
+  });
+
+  saveCart();
+  renderCart();
+}
+
+function changeQuantity(id, amount) {
+  const item = cart.find(p => p.id === id);
+  if (!item) return;
+  item.quantity += amount;
+  if (item.quantity <= 0) cart = cart.filter(p => p.id !== id);
+  saveCart();
+  renderCart();
+}
+
+function removeFromCart(id) {
+  cart = cart.filter(p => p.id !== id);
+  saveCart();
+  renderCart();
+}
+
+function totals() {
+  const subtotal = cart.reduce((sum,p) => sum + p.price*p.quantity, 0);
+  const tax = subtotal * TAX_RATE;
+  const shipping = subtotal === 0 || subtotal >= FREE_SHIPPING_LIMIT ? 0 : SHIPPING_FEE;
+  return {subtotal, tax, shipping, total:subtotal+tax+shipping};
+}
+
+function renderCart() {
+  $("cartCount").textContent = cart.reduce((sum,p) => sum+p.quantity, 0);
+
+  $("cartItems").innerHTML = cart.length ? cart.map(p => `
+    <div class="cart-item">
+      <img src="${esc(p.image)}" alt="${esc(p.title)}">
+      <div>
+        <h4>${esc(p.title)}</h4>
+        <p>${money(p.price)}</p>
+        <div class="qty">
+          <button onclick="changeQuantity(${p.id},-1)">−</button>
+          <span>${p.quantity}</span>
+          <button onclick="changeQuantity(${p.id},1)">+</button>
+        </div>
+        <button onclick="removeFromCart(${p.id})" style="border:0;background:white;color:#d93650;margin-top:7px">Remove</button>
+      </div>
+      <strong style="font-size:12px">${money(p.price*p.quantity)}</strong>
+    </div>
+  `).join("") : '<div class="status"><h3>Your cart is empty 🛒</h3><p style="margin-top:8px">Add products to get started.</p></div>';
+
+  const t = totals();
+  $("subtotal").textContent = money(t.subtotal);
+  $("tax").textContent = money(t.tax);
+  $("shipping").textContent = money(t.shipping);
+  $("total").textContent = money(t.total);
+  $("checkoutButton").disabled = !cart.length;
+  $("checkoutButton").style.opacity = cart.length ? "1" : ".5";
+}
+
+function openCart() {
+  $("cartPanel").classList.add("open");
+  $("overlay").classList.add("show");
+}
+
+function closeCart() {
+  $("cartPanel").classList.remove("open");
+  $("overlay").classList.remove("show");
+}
+
+$("cartNav").addEventListener("click", openCart);
+$("closeCart").addEventListener("click", closeCart);
+$("overlay").addEventListener("click", closeCart);
+
+$("checkoutButton").addEventListener("click", () => {
+  if (!cart.length) return;
+  closeCart();
+  $("checkoutModal").classList.add("show");
+});
+
+function closeCheckout() {
+  $("checkoutModal").classList.remove("show");
+}
+
+$("closeCheckout").addEventListener("click", closeCheckout);
+$("cancelCheckout").addEventListener("click", closeCheckout);
+
+$("checkoutForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!cart.length) return;
+
+  const customer = {
+    name:$("customerName").value.trim(),
+    email:$("customerEmail").value.trim(),
+    address:$("customerAddress").value.trim(),
+    phone:$("customerPhone").value.trim()
+  };
+
+  if (!customer.name || !customer.email || !customer.address) {
+    alert("Please fill in all required fields.");
+    return;
+  }
+
+  const t = totals();
+  const order = {
+    id:"SE" + Date.now().toString().slice(-8),
+    customer,
+    items:cart.map(p => ({...p})),
+    subtotal:t.subtotal, tax:t.tax, shipping:t.shipping, total:t.total,
+    status:"Pending",
+    date:new Date().toLocaleString("en-IN")
+  };
+
+  orders = readStorage(ORDERS_KEY, []);
+  orders.unshift(order);
+  saveOrders();
+
+  cart = [];
+  saveCart();
+  renderCart();
+  closeCheckout();
+  $("checkoutForm").reset();
+
+  alert("Demo order placed! Order ID: " + order.id);
+  showPage("admin");
+});
+
+function renderOrders() {
+  orders = readStorage(ORDERS_KEY, []);
+  $("totalOrders").textContent = orders.length;
+  $("pendingOrders").textContent = orders.filter(o => o.status === "Pending").length;
+
+  const revenue = orders
+    .filter(o => o.status !== "Cancelled")
+    .reduce((sum,o) => sum + (Number(o.total)||0), 0);
+  $("totalRevenue").textContent = money(revenue);
+
+  $("emptyOrders").style.display = orders.length ? "none" : "block";
+
+  $("ordersTable").innerHTML = orders.map(o => `
+    <tr>
+      <td><strong>${esc(o.id)}</strong><br><br>${esc(o.date)}</td>
+      <td>${esc(o.customer?.name)}<br>${esc(o.customer?.email)}</td>
+      <td>${(o.items||[]).reduce((s,p)=>s+p.quantity,0)} item(s)</td>
+      <td><strong>${money(o.total)}</strong></td>
+      <td>
+        <select onchange="updateStatus('${esc(o.id)}',this.value)">
+          ${["Pending","Processing","Shipped","Delivered","Cancelled"].map(s =>
+            `<option value="${s}" ${o.status===s?"selected":""}>${s}</option>`
+          ).join("")}
+        </select>
+      </td>
+      <td>
+        <button class="btn small" onclick="viewOrder('${esc(o.id)}')">View</button>
+        <button class="btn danger small" onclick="deleteOrder('${esc(o.id)}')">Delete</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function updateStatus(id, status) {
+  const allowed = ["Pending","Processing","Shipped","Delivered","Cancelled"];
+  if (!allowed.includes(status)) return;
+  orders = readStorage(ORDERS_KEY, []);
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+  order.status = status;
+  saveOrders();
+  renderOrders();
+}
+
+function deleteOrder(id) {
+  if (!confirm("Delete this order?")) return;
+  orders = readStorage(ORDERS_KEY, []).filter(o => o.id !== id);
+  saveOrders();
+  renderOrders();
+}
+
+function viewOrder(id) {
+  const o = readStorage(ORDERS_KEY, []).find(item => item.id === id);
+  if (!o) return;
+
+  $("detailsContent").innerHTML = `
+    <p><strong>Order ID:</strong> ${esc(o.id)}</p>
+    <p><strong>Date:</strong> ${esc(o.date)}</p>
+    <p><strong>Status:</strong> ${esc(o.status)}</p>
+    <hr style="margin:15px 0;border:0;border-top:1px solid #e8e9f0">
+    <h3>Customer Information</h3>
+    <p><strong>Name:</strong> ${esc(o.customer?.name)}</p>
+    <p><strong>Email:</strong> ${esc(o.customer?.email)}</p>
+    <p><strong>Phone:</strong> ${esc(o.customer?.phone||"Not provided")}</p>
+    <p><strong>Address:</strong> ${esc(o.customer?.address)}</p>
+    <hr style="margin:15px 0;border:0;border-top:1px solid #e8e9f0">
+    <h3>Products</h3>
+    ${(o.items||[]).map(p => `<p>${esc(p.title)} × ${p.quantity}<br><strong>${money(p.price*p.quantity)}</strong></p>`).join("")}
+    <hr style="margin:15px 0;border:0;border-top:1px solid #e8e9f0">
+    <p>Subtotal: <strong>${money(o.subtotal)}</strong></p>
+    <p>Tax: <strong>${money(o.tax)}</strong></p>
+    <p>Shipping: <strong>${money(o.shipping)}</strong></p>
+    <p style="font-size:19px">Total: <strong>${money(o.total)}</strong></p>
+  `;
+  $("detailsModal").classList.add("show");
+}
+
+function closeDetails() {
+  $("detailsModal").classList.remove("show");
+}
+
+$("closeDetails").addEventListener("click", closeDetails);
+$("detailsModal").addEventListener("click", e => {
+  if (e.target.id === "detailsModal") closeDetails();
+});
+$("refreshAdmin").addEventListener("click", renderOrders);
+window.addEventListener("storage", e => {
+  if (e.key === ORDERS_KEY || e.key === CART_KEY) {
+    cart = readStorage(CART_KEY, []);
+    orders = readStorage(ORDERS_KEY, []);
+    renderCart();
+    renderOrders();
+  }
+});
+
+$("year").textContent = new Date().getFullYear();
+renderCart();
+renderOrders();
+loadProducts();
+</script>
+</body>
+</html>

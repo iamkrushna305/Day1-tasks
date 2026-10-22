@@ -1,0 +1,540 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkyCast Weather Dashboard</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      padding: 24px 16px;
+      color: white;
+      background: linear-gradient(135deg, #173b70, #3478a8, #77b9d6);
+      transition: background 0.4s;
+    }
+
+    body.sunny {
+      background: linear-gradient(135deg, #f7971e, #ffd76a, #70c7e8);
+    }
+
+    body.cloudy {
+      background: linear-gradient(135deg, #485563, #718096, #a8c0ce);
+    }
+
+    body.rainy {
+      background: linear-gradient(135deg, #172b4d, #344f70, #6689a8);
+    }
+
+    body.night {
+      background: linear-gradient(135deg, #10162e, #263d68, #42618b);
+    }
+
+    .container {
+      max-width: 950px;
+      margin: auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 25px;
+    }
+
+    .logo {
+      font-size: 27px;
+      font-weight: bold;
+    }
+
+    .logo span {
+      color: #ffe082;
+    }
+
+    form {
+      display: flex;
+      gap: 8px;
+      width: min(100%, 420px);
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    button {
+      padding: 13px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #ffdc73;
+      color: #172b4d;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ffe9a8;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
+    }
+
+    .current {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .city {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .date {
+      margin-bottom: 18px;
+      opacity: 0.9;
+    }
+
+    .temperature {
+      font-size: clamp(55px, 10vw, 82px);
+      font-weight: bold;
+    }
+
+    .condition {
+      font-size: 19px;
+      text-transform: capitalize;
+    }
+
+    .weather-icon {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+    }
+
+    h2 {
+      font-size: 21px;
+      margin-bottom: 18px;
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .detail {
+      text-align: center;
+      padding: 18px 8px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+    }
+
+    .symbol {
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+
+    .detail p {
+      font-size: 13px;
+      margin-bottom: 8px;
+      opacity: 0.9;
+    }
+
+    .detail strong {
+      font-size: 18px;
+    }
+
+    .forecast {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .forecast-day {
+      text-align: center;
+      padding: 12px 6px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+    }
+
+    .forecast-day h3 {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .forecast-day img {
+      width: 60px;
+      height: 60px;
+    }
+
+    .forecast-day p {
+      font-size: 12px;
+      margin: 6px 0;
+      text-transform: capitalize;
+    }
+
+    .forecast-temp {
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    #message, #loader {
+      display: none;
+      text-align: center;
+      padding: 14px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: #ffdc73;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    footer {
+      text-align: center;
+      font-size: 13px;
+      opacity: 0.8;
+      padding: 10px;
+    }
+
+    @media (max-width: 650px) {
+      header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      form {
+        width: 100%;
+      }
+
+      .details {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .forecast {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .forecast-day:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <header>
+      <div class="logo">☀ Sky<span>Cast</span></div>
+
+      <form id="searchForm">
+        <input
+          id="cityInput"
+          type="text"
+          placeholder="Enter city name"
+          aria-label="Enter city name"
+          required
+        >
+        <button type="submit">Search</button>
+      </form>
+    </header>
+
+    <div id="message" role="status"></div>
+
+    <div id="loader">
+      <div class="spinner"></div>
+      <p>Loading weather...</p>
+    </div>
+
+    <section class="panel">
+      <div class="current">
+        <div>
+          <h1 class="city" id="cityName">Pune, IN</h1>
+          <p class="date" id="currentDate"></p>
+          <div class="temperature">
+            <span id="temperature">--</span>°C
+          </div>
+          <p class="condition" id="condition">Weather information</p>
+        </div>
+
+        <img id="weatherIcon" class="weather-icon" alt="Weather icon">
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Today's Highlights</h2>
+
+      <div class="details">
+        <div class="detail">
+          <div class="symbol">🌡️</div>
+          <p>Feels Like</p>
+          <strong id="feelsLike">--°C</strong>
+        </div>
+
+        <div class="detail">
+          <div class="symbol">💧</div>
+          <p>Humidity</p>
+          <strong id="humidity">--%</strong>
+        </div>
+
+        <div class="detail">
+          <div class="symbol">💨</div>
+          <p>Wind Speed</p>
+          <strong id="wind">-- m/s</strong>
+        </div>
+
+        <div class="detail">
+          <div class="symbol">🔵</div>
+          <p>Pressure</p>
+          <strong id="pressure">-- hPa</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>5-Day Forecast</h2>
+      <div class="forecast" id="forecast">
+        <p>Forecast will appear here.</p>
+      </div>
+    </section>
+
+    <footer>Weather data provided by OpenWeatherMap</footer>
+  </div>
+
+  <script>
+    // IMPORTANT: Put your active API key between these quotes.
+    const API_KEY = "f3844167e601a9abd1b64ddf459e9b39";
+
+    const $ = id => document.getElementById(id);
+
+    $("currentDate").textContent = new Date().toLocaleDateString(
+      undefined,
+      { weekday: "long", year: "numeric", month: "long", day: "numeric" }
+    );
+
+    function showMessage(text) {
+      $("message").textContent = text;
+      $("message").style.display = "block";
+    }
+
+    function clearMessage() {
+      $("message").textContent = "";
+      $("message").style.display = "none";
+    }
+
+    async function getJSON(url) {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error(
+            "API key is invalid or not active. Check your OpenWeatherMap key."
+          );
+        }
+
+        if (response.status === 404) {
+          throw new Error("City not found. Check the city name.");
+        }
+
+        if (response.status === 429) {
+          throw new Error("API request limit reached. Try again later.");
+        }
+
+        throw new Error("Weather request failed. Please try again.");
+      }
+
+      return response.json();
+    }
+
+    function iconURL(code) {
+      return `https://openweathermap.org/img/wn/${code}@2x.png`;
+    }
+
+    function setBackground(condition, iconCode) {
+      document.body.classList.remove(
+        "sunny", "cloudy", "rainy", "night"
+      );
+
+      if (iconCode.endsWith("n")) {
+        document.body.classList.add("night");
+      } else if (/rain|drizzle|thunderstorm/.test(condition)) {
+        document.body.classList.add("rainy");
+      } else if (/cloud|mist|fog|haze/.test(condition)) {
+        document.body.classList.add("cloudy");
+      } else if (/clear/.test(condition)) {
+        document.body.classList.add("sunny");
+      }
+    }
+
+    function dayName(date) {
+      return new Date(date + "T12:00:00").toLocaleDateString(
+        undefined, { weekday: "short" }
+      );
+    }
+
+    async function loadWeather(city) {
+      const key = API_KEY.trim();
+
+      if (
+        !key ||
+        key === "PASTE_YOUR_ACTIVE_API_KEY_HERE"
+      ) {
+        showMessage(
+          "Add your active API key in the API_KEY line in this file first."
+        );
+        return;
+      }
+
+      clearMessage();
+      $("loader").style.display = "block";
+
+      try {
+        const query = `q=${encodeURIComponent(city)}&appid=${encodeURIComponent(key)}&units=metric`;
+
+        const [current, forecastData] = await Promise.all([
+          getJSON(
+            `https://api.openweathermap.org/data/2.5/weather?${query}`
+          ),
+          getJSON(
+            `https://api.openweathermap.org/data/2.5/forecast?${query}`
+          )
+        ]);
+
+        $("cityName").textContent =
+          `${current.name}, ${current.sys.country}`;
+
+        $("temperature").textContent =
+          Math.round(current.main.temp);
+
+        $("condition").textContent =
+          current.weather[0].description;
+
+        $("weatherIcon").src =
+          iconURL(current.weather[0].icon);
+
+        $("feelsLike").textContent =
+          `${Math.round(current.main.feels_like)}°C`;
+
+        $("humidity").textContent =
+          `${current.main.humidity}%`;
+
+        $("wind").textContent =
+          `${current.wind.speed} m/s`;
+
+        $("pressure").textContent =
+          `${current.main.pressure} hPa`;
+
+        setBackground(
+          current.weather[0].main.toLowerCase(),
+          current.weather[0].icon
+        );
+
+        // Group forecast entries by date.
+        const grouped = {};
+
+        forecastData.list.forEach(item => {
+          const date = item.dt_txt.split(" ")[0];
+
+          if (!grouped[date]) grouped[date] = [];
+          grouped[date].push(item);
+        });
+
+        const dates = Object.keys(grouped).slice(0, 5);
+        const forecastElement = $("forecast");
+        forecastElement.replaceChildren();
+
+        dates.forEach((date, index) => {
+          const entries = grouped[date];
+
+          // Select the available entry closest to 12:00.
+          const item = entries.reduce((best, candidate) => {
+            const hour = Number(candidate.dt_txt.slice(11, 13));
+            const bestHour = Number(best.dt_txt.slice(11, 13));
+
+            return Math.abs(hour - 12) < Math.abs(bestHour - 12)
+              ? candidate : best;
+          });
+
+          const card = document.createElement("div");
+          card.className = "forecast-day";
+
+          const title = document.createElement("h3");
+          title.textContent = index === 0 ? "Today" : dayName(date);
+
+          const icon = document.createElement("img");
+          icon.src = iconURL(item.weather[0].icon);
+          icon.alt = item.weather[0].description;
+
+          const temp = document.createElement("div");
+          temp.className = "forecast-temp";
+          temp.textContent = `${Math.round(item.main.temp)}°C`;
+
+          const description = document.createElement("p");
+          description.textContent = item.weather[0].description;
+
+          const humidity = document.createElement("p");
+          humidity.textContent = `Humidity: ${item.main.humidity}%`;
+
+          card.append(title, icon, temp, description, humidity);
+          forecastElement.appendChild(card);
+        });
+
+      } catch (error) {
+        showMessage(error.message);
+      } finally {
+        $("loader").style.display = "none";
+      }
+    }
+
+    $("searchForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      const city = $("cityInput").value.trim();
+      if (city) loadWeather(city);
+    });
+
+    // Default city when the page opens.
+    loadWeather("Pune");
+  </script>
+</body>
+</html>
